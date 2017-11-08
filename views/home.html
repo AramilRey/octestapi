@@ -1,0 +1,153 @@
+<html lang="en">
+  <head>
+      <title>Test API</title>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="header">Oasis Collections Test</h1>
+      <blockquote>
+        User stories:
+        <ul>1) Un Endpoint que retorne una lista de casas extraidas de una API externa aplicando algunos filtros.</ul>
+        <ul>2) Un Endpoint que retorne una casa extraida de una API externa agregando un campo que indique si la casa se encuentra o no en un radio de 1km de la latitud y longitud provista por los parametros.</ul>
+      </blockquote>
+    </div>
+
+    <div class="container"">
+      <div class="row">
+        <div class="col-xs-12 col-sm-6">
+          <h3>Services:</h3>
+          <div id ="service-switcher"></div>
+        </div>
+        <div class="table-responsive col-xs-12 col-sm-6">
+          <h3 id="current-service"></h3>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="api-params">
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><button type="button" id="caller-button" class="btn btn-primary">Go!</button></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="col-xs-12">
+          <div class="col-xs-12 col-sm-6">
+          </div>
+          <div class="col-xs-12 col-sm-6">
+            <pre style="max-height: 300px; overflow-y: scroll;"><code id="json"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      let currentService = 'isIn1KmRadius';
+      const xhr = new XMLHttpRequest();
+      const services = {
+        list: {
+          uri: '/api/properties',
+          params: [
+            {
+              displayName: 'Min. Bedrooms',
+              apiName: 'minBedrooms',
+              defaultValue: '1'
+            },
+            {
+              displayName: 'Min. Accommodates',
+              apiName: 'accommodates',
+              defaultValue: '2'
+            },
+            {
+              displayName: 'Property name',
+              apiName: 'name'
+            }
+          ]
+        },
+        isIn1KmRadius: {
+          uri: '/api/properties/1kmradius',
+          params: [
+            {
+              displayName: 'Property id',
+              apiName: 'id',
+              defaultValue: 'abdf488979936328'
+            },
+            {
+              displayName: 'Latitude',
+              apiName: 'lat',
+              defaultValue: '34.1145240010'
+            },
+            {
+              displayName: 'Longitude',
+              apiName: 'lon',
+              defaultValue: '-118.5235841001'
+            }
+          ]
+        }
+      };
+
+      const apiParamsTable = document.getElementById("api-params");
+      // Change current service
+      const changeService = (serviceName) => {
+        currentService = serviceName;
+
+        let paramsHtml = '';
+        services[currentService].params.forEach(param => {
+          paramsHtml += `<tr>
+            <td>${param.displayName}</td>
+            <td><input type="text" class="form-control" id="${param.apiName}" value="${param.defaultValue || ''}"></td>
+          </tr>`
+        });
+
+        apiParamsTable.innerHTML = paramsHtml;
+        document.getElementById("current-service").innerHTML = currentService;
+      }
+
+      // Manage Request state
+      xhr.onreadystatechange = () => {
+        let state = 'processing...';
+        if (xhr.readyState == 4) {
+          let response = JSON.parse(xhr.responseText)
+          state = JSON.stringify(response, null, 4);
+        }
+        document.getElementById("json").innerHTML = state;
+      }
+
+      // Make call to current service
+      const makeCall = () => {
+        let qs = '?';
+
+        services[currentService].params.forEach((param, i) => {
+          let val = document.getElementById(param.apiName).value;
+          if (i) qs += '&';
+          qs += `${param.apiName}=${val}`;
+        })
+
+        xhr.open("GET", `${services[currentService].uri}${qs}`);
+        xhr.send();
+      }
+
+      // Bind makeCall to caller button
+      const callerButton = document.getElementById("caller-button");
+      callerButton.addEventListener("click", makeCall);
+
+      // Populate service switcher
+      const serviceSwitcherList = document.getElementById("service-switcher");
+      Object.keys(services).forEach(service => {
+        serviceSwitcherList.innerHTML += `<button class="btn btn-primary" id="${service}" onclick="changeService('${service}')">${service}</button><br><br>`;
+      })
+
+      // Automatically set first service and make the call
+      changeService('list');
+      makeCall();
+    </script>
+
+  </body>
+</html>
