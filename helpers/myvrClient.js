@@ -23,7 +23,7 @@ const getList = (filters) => {
 
   // Add filters as query string
   Object.keys(filters).forEach((filter) => {
-    if (validFilters.indexOf(filter) !== -1) qs[filter] = filters[filter];
+    if (validFilters.indexOf(filter) !== -1 && filters[filter]) qs[filter] = filters[filter];
   });
 
   // Return API call with transform function
